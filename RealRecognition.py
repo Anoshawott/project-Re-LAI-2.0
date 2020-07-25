@@ -28,7 +28,9 @@ class Detection:
         tmp_numbers = {}
         # Read and crop the input image 
         crop_img = img[y:y+height, x:x+width]
-        
+        # cv2.imshow('crop', crop_img)
+        # cv2.waitKey()
+
         # if x == 146 and y==20 and width==30 and height==15:
         #     cv2.imwrite('hp_test.jpg', crop_img)
 
@@ -39,17 +41,13 @@ class Detection:
         w, h = template.shape[::-1]
         res = cv2.matchTemplate(im_gray, template, cv2.TM_CCOEFF_NORMED)
         
-        if region == 'hp' or region == 'kda':
-            threshold = 0.9
-        # elif region == 'hp-tur':
-        #     threshold = 0.77
-        else:
-            threshold = 0.8
+        threshold = 0.82
         
         loc = np.where(res >= threshold)
 
         count = 0
         for pt in zip(*loc[::-1]):
+            cv2.rectangle(crop_img,pt,(pt[0]+w, pt[1]+h), (0,255,255), 2)
             if count == 1:
                 tmp_numbers[str(copy)+'_!'] = pt[0]
                 count += 1
@@ -61,6 +59,11 @@ class Detection:
             else:
                 tmp_numbers[str(copy)] = pt[0]
                 count += 1
+
+        # cv2.imshow('crop', crop_img)
+        # cv2.waitKey()
+        # print(copy)
+
         return tmp_numbers
 
 
@@ -154,10 +157,9 @@ class Detection:
     def get_data(self, last_digits = None, last_pos = None, time = 0):
         img = self.screenshot()
         cv2.imwrite('test.jpg', img)
-        exit()
         # cv2.imwrite('turret_display.jpg', img)
-        input_data = {'enemy':[217,312,58,33], 
-                'player':[1103,0,43,13]}
+        input_data = {'enemy_damage':[217,312,58,33], 
+                'player_damage':[67,309,62,36]}
         output_data = {}
         
         for area in input_data:
@@ -166,137 +168,28 @@ class Detection:
             y_coor = input_data[area][1]
             w = input_data[area][2]
             h = input_data[area][3]
-            numbers = {}
-            if area == 'cs' or area=='kda' or area=='level' or area=='hp' or area=='mana' or area=='coins' or area=='turret':
-                if area == 'kda':
-                    var = 11
-                    area_tmp = area
-                elif area == 'mana':
-                    area_tmp = 'hp'
-                else:
-                    var = 10
-                    area_tmp = area    
-                for number in range(var):
-                    if number == 10:
-                        number = 'x'
-                    returned_numbers = self.digit_detect(img = img, copy = number, region = area_tmp,
-                                                x = x_coor, y = y_coor, width = w, height = h)
-                    z = numbers.copy()
-                    z.update(returned_numbers)
-                    numbers = z
-                num = {k: v for k, v in sorted(numbers.items(), key=lambda item: item[1])}
-                num_str = ''
-                for key in num:
-                    num_str = num_str + key
-                remove = ['_', '!', '@', "#"]
-                for i in remove:
-                    num_str = num_str.replace(i, '')
-                if area == 'kda' and num_str != '':
-                    print(num_str)
-                    kda = ['k', 'd', 'a']
-                    count = 0
-                    for i in num_str:
-                        if i == '':
-                            return last_digits
-                        elif i == 'x':
-                            continue
-                        else:
-                            output_data[kda[count]] = i
-                            count+=1
-                    # output_data[area]=kda
-                    continue
-                if num_str == '':
-                    output_data[area]=last_digits[area]
-                else:
-                    output_data[area]=num_str
+            numbers = {} 
+            for number in range(10):
+                # print(number)
+                returned_numbers = self.digit_detect(img = img, copy = number, region = area,
+                                            x = x_coor, y = y_coor, width = w, height = h)
+                z = numbers.copy()
+                z.update(returned_numbers)
+                print(z)
+            numbers = z
+            num = {k: v for k, v in sorted(numbers.items(), key=lambda item: item[1])}
+            num_str = ''
+            for key in num:
+                num_str = num_str + key
+            remove = ['_', '!', '@', "#"]
+            for i in remove:
+                num_str = num_str.replace(i, '')
+            if num_str == '':
+                output_data[area]=None
             else:
-                # fix last thiing later just a minor problem easy when formulating final player positions
-                # in player_interaction.py
-                None
-                if last_pos is None:
-                    last = [20,170]
-                else:
-                    last = last_pos
-
-                x_pos, y_pos = self.player_detect(img = img, copy = number, region = area,
-                                                x = x_coor, y = y_coor, width = w, height = h, last=last)
-                # x_pos = 20
-                # y_pos = 170
-                map_data['player_pos']=[x_pos, y_pos]
-
-                # closest distance coordinate to turret_outer --> 6 units
-                # Try get this distance and apply this same distance condition for the other turrets 
-
-                #### Just get the other turret coordinates from their centre in photoshop --> then figure out
-                #### how to determine which turret hp information will be updated from an EXISTING DICT
-
-                turrets = {'tur_outer':[112,86],'tur_inner':[122,66],'tur_inhib':[138,53],
-                            'inhib':[143,46],'tur_nex_1':[155,30],'tur_nex_2':[160,36],'nexus':[162,28]}
-
-                def dist(cur_pos = None, tur_pos = None):
-                    return math.sqrt((tur_pos[1]-cur_pos[1])**2 + (tur_pos[0]-cur_pos[0])**2)
-                
-                map_data['tur_dist']={}
-                map_data['tur_hp']={}
-
-                x_coor = 146
-                y_coor = 20
-                w = 30
-                h = 15
-                
-                for tur in turrets:
-                    rel_dist = dist(map_data['player_pos'],turrets[tur])
-                    map_data['tur_dist'][tur]=math.floor(rel_dist)
-                    if math.floor(rel_dist)<=7:
-                        for number in range(10):
-                            # print(number)
-                            returned_numbers = self.digit_detect(img = img, copy = number, region = 'hp-tur',
-                                                        x = x_coor, y = y_coor, width = w, height = h)
-                            z = numbers.copy()
-                            z.update(returned_numbers)
-                            numbers = z
-                        num = {k: v for k, v in sorted(numbers.items(), key=lambda item: item[1])}
-                        num_str = ''
-                        for key in num:
-                            num_str = num_str + key
-                        remove = ['_', '!', '@', "#"]
-                        for i in remove:
-                            num_str = num_str.replace(i, '')
-                        if num_str == '':
-                            None
-                        else:
-                            map_data['tur_hp'][tur]=num_str
-
-                # have a HIGHER REWARD for getting closer and attacking higher up turrets 
-                ##### need to do MANA check and reward system for regaining this but not too much that it 
-                ##### does it constantly without pushing forward
-                # Only reading turret position a certain distance away --> only store turret HP if a 
-                # value for turret HP is established
-
-            # Enemy detect sequence; read only 1270x560
-            ## HAVE FACIAL RECOGNITION OF PLAYERS ON START SCREEN; SAVE EACH PLAYER FACE FROM LOADING
-            ## SCREEN. IF THERE ARE MORE THAN ONE LEVEL BARS IN THE GIVEN SCREEN AI WILL QUICKLY CLICK 
-            ## ON THE OTHER PLAYER THAT HAS ENTERED THE SCREEN IDENTIFY FROM THE TOP LEFT SPACE THE FACE
-            ## USING TEMPLATE MATCHING WILL UNDERSTAND IF THE PLAYER IS AN ENEMY OR ALLY!!!!!
-
-            ### OR try to analyse dataset from online --> look into...
-
-            ### FINAL DECISION: Try read enemy hud in top left use hsv range colour check
-            ### to see if red if in the red range then return as enemy within range...
-            # (WILL COME BACK TO LATER SINCE TAKING WAY TOO MUCH TIME RIGHT NOW!!)
-
+                output_data[area]=num_str
             
-
-            ### SIDE NOTE: might need to consider distance to other turrets; strategy may change throughout 
-            # the game where champion should go based on other players...
-
-            # FOR NOW --> 
-            # Just to know that there are potential enemies around ; take caution...
-            # enemy_presence = self.enemy_detect(img=img)
-            # would add this to returned dictionary below... 'enemy_presence': 0,
-
-        return {'output_data':output_data, 'map_data':map_data,
-                 'img': img}
+        return {'output_data':output_data, 'img': img}
 
 Detection().get_data()
 
