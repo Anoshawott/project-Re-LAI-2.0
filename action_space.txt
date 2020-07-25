@@ -1,0 +1,22 @@
+Action space:
+
+Movement:
+-w
+-a
+-s
+-d
+
+-w x2
+-a x2
+-d x2
+
+Attacks:
+-o
+-p
+-o (hold)
+-(w or d hold) and (o x2 or o x4) - 4 actions
+-(w or d hold) and (o x4 holding s) - 2 actions
+-u and p x3 and w
+-i hold (1 sec) and (a or d) - 2 actions
+
+total actions = 18
