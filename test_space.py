@@ -1,4 +1,3 @@
-from window_cap import WindowCapture
 from RealRecognition import Detection
 import cv2
 import time
@@ -31,6 +30,12 @@ def realtime_capture(wincap=None):
     return print('Done.')
 
 realtime_capture()
+
+##image capture
+# time.sleep(2)
+# for i in range(60):
+#     Detection().img_save(number=i)
+#     time.sleep(1)
 
 # from DirectKeys import PressKey, ReleaseKey, START, ESC
 

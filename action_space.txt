@@ -16,7 +16,7 @@ Attacks:
 -o (hold)
 -(w or d hold) and (o x2 or o x4) - 4 actions
 -(w or d hold) and (o x4 holding s) - 2 actions
--u and p x3 and w
+-u and p x3 and w (maybe...)
 -i hold (1 sec) and (a or d) - 2 actions
 
-total actions = 18
+total actions = 18 or 17
