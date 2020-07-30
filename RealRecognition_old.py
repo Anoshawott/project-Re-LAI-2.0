@@ -10,7 +10,11 @@ import os
 import pickle
 
 # Maybe consider gpu accelerated python compiling...
-# from numba import jit, cuda
+from numba import jit, cuda
+
+##### SUCCESS!!!!!!!
+# NOTE: 0.8 = get_coins, GET_HP WILL NEED ITS OWN SET OF NUMBERS TO COMPARE, ALSO NUMBERS FOR
+# METRICS MAY BE DIFFERENT AND MAY NEED EXTRA SET 
 
 class Detection:
 
@@ -29,86 +33,58 @@ class Detection:
         # w, h = template.shape[::-1]
         return cv2.matchTemplate(im_gray, template, cv2.TM_CCOEFF_NORMED)
 
-    def res_output(self, sec_crop=None, n_col=None, number=None, nums=None, area=None, max_r=None, max_r2=None):
-        template = cv2.imread('images/numbers/'+ area +'/'+ n_col +'/'+ str(number) + '.jpg', 0)
-        res = self.match_res(sec_crop, template)
-        print(res)
-        cv2.imshow('temp', template)
-        cv2.waitKey()
-
-        # print(i)
-
-        if area!='enemy_damage':
-            if res > max_r:
-                max_r = res
-                nums.append(number)
-            else:
-                return max_r, max_r2, nums
-        else:
-            if res > max_r2:
-                max_r2 = res
-                nums.append(number)
-            else:
-                return max_r, max_r2, nums
-        # count = 0
-                # for pt in zip(*loc[::-1]):
-                #     count+=1
-
-                # if count > 0 and region=='enemy_damage':
-                #     nums.append(img)
-                # elif count > 0:
-                #     nums.append(img)
-        try:
-            return max_r, max_r2, nums
-        except:
-            return None
-
-
     def digit_detect(self, img=None, region=None, x=0, y=0, width=640, height=361):
         tmp_numbers = {}
         # Read and crop the input image 
-        crop_img_og = img[y:y+height, x:x+width]
-        # cv2.imshow('crop', crop_img_og)
+        crop_img = img[y:y+height, x:x+width]
+        # cv2.imshow('crop', crop_img)
         # cv2.waitKey()
 
         # if x == 146 and y==20 and width==30 and height==15:
         #     cv2.imwrite('hp_test.jpg', crop_img)
-        # pickle_in = open('imgNames.pickle', 'rb')
-        # new_names = pickle.load(pickle_in)
+        pickle_in = open('imgNames.pickle', 'rb')
+        new_names = pickle.load(pickle_in)
 
-        #[217,312,58,33]
+        max_res = 0.75
+        max_res2 = 0.95
+        nums = []
+        for img in new_names:
+            template = cv2.imread('images/numbers/image_write/'+ region +'/done_images/'+ str(img) + '.jpg', 0)
+            res = self.match_res(crop_img, template)
 
-        num_col = {'hunds':[5,0,18,33], 'tens':[22,0,18,33], 'ones':[40,0,18,33]}
-        final_num = ''
-        for k in num_col:
-            max_res = 0.5
-            max_res2 = 0.5
-            nums_true = []
-            if k!='hunds':
-                crop_img = crop_img_og[num_col[k][1]:num_col[k][1]+num_col[k][3], num_col[k][0]:num_col[k][0]+num_col[k][2]]
-                for i in range(10):
-                    # NEED TO FIX TENS SINCE THE DIGIT MOVES DIFFERENTLY WHEN ONES DIGIT IS A DIFFERENT NUMBER EACH TIME... (NEED A SOLUTION!) 
-                    cv2.imshow('sec', crop_img)
-                    cv2.waitKey()
-                    max_res, max_res2, digits = self.res_output(sec_crop=crop_img, n_col=k, number=i, nums=nums_true, area=region, max_r=max_res, max_r2=max_res2)
-                    print(digits)
-                try:
-                    final_num = final_num + str(digits[-1])
-                except:
-                    None
+            if region!='enemy_damage':
+                if res > max_res:
+                    max_res = res
+                    nums.append(img)
+                else:
+                    continue
             else:
-                crop_img = crop_img_og[num_col[k][1]:num_col[k][1]+num_col[k][3], num_col[k][0]:num_col[k][0]+num_col[k][2]]
-                for i in range(1,3):
-                    cv2.imshow('sec', crop_img)
-                    cv2.waitKey()
-                    max_res, max_res2, digits = self.res_output(sec_crop=crop_img, n_col=k, number=i, nums=nums_true, area=region, max_r=max_res, max_r2=max_res2)
-                    print(digits)
-                try:
-                    final_num = final_num + str(digits[-1])
-                except:
-                    None
+                if res > max_res2:
+                    max_res2 = res
+                    nums.append(img)
+                else:
+                    continue
+            
+            
 
-        return final_num
+            count = 0
+            # for pt in zip(*loc[::-1]):
+            #     count+=1
+
+            # if count > 0 and region=='enemy_damage':
+            #     nums.append(img)
+            # elif count > 0:
+            #     nums.append(img)
+        try:
+            return nums[-1]
+        except:
+            return None
+
+        # cv2.imshow('crop', crop_img)
+        # cv2.waitKey()
+        # print(copy)
+
+        return tmp_numbers
 
 
     def img_save(self, number=None):
@@ -159,12 +135,12 @@ class Detection:
     ## FINISH FIXING DATA CHECK DICTIONARY TO IMPROVE EFFICIENCY BY AVOIDING A FOR LOOP THROUGH ALL IMAGES...
     # ONCE DATA CHECK DONE CAN START DQLN IMPLEMENTATION...
     # put output_data variable for last_digits when initiating function; turret':[146,20,30,15],
-    def get_data(self, last_digits = None, last_pos = None, time = 0):
+    def get_data(self, data_checked=None, last_digits = None, last_pos = None, time = 0):
         img = self.screenshot()
         cv2.imwrite('test.jpg', img)
         # cv2.imwrite('turret_display.jpg', img)
-        input_data = {'enemy_damage':[217,312,58,33]} #62,36
-        #, 'player_damage':[67,312,58,33]
+        input_data = {'enemy_damage':[217,312,58,33], 
+                'player_damage':[67,312,58,33]} #62,36
         output_data = {}
         
         for area in input_data:
@@ -175,7 +151,7 @@ class Detection:
             h = input_data[area][3]
             numbers = {} 
 
-            returned_number = self.digit_detect(img = img, region = area,
+            returned_number = self.digit_detect(check=None, img = img, region = area,
                                         x = x_coor, y = y_coor, width = w, height = h)
             output_data[area]=returned_number  
 
