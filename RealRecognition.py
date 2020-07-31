@@ -32,21 +32,22 @@ class Detection:
     def res_output(self, sec_crop=None, n_col=None, number=None, nums=None, area=None, max_r=None, max_r2=None):
         template = cv2.imread('images/numbers/'+ area +'/'+ n_col +'/'+ str(number) + '.jpg', 0)
         res = self.match_res(sec_crop, template)
-        print(res)
-        cv2.imshow('temp', template)
-        cv2.waitKey()
+        # print(res)
+        # cv2.imshow('temp', template)
+        # cv2.waitKey()
 
         # print(i)
 
         if area!='enemy_damage':
-            if res > max_r:
-                max_r = res
+            if np.max(res) > max_r:
+                max_r = np.max(res)
                 nums.append(number)
             else:
                 return max_r, max_r2, nums
         else:
-            if res > max_r2:
-                max_r2 = res
+            if np.max(res) > max_r2:
+                max_r2 = np.max(res)
+                # print(max_r2)
                 nums.append(number)
             else:
                 return max_r, max_r2, nums
@@ -78,7 +79,7 @@ class Detection:
 
         #[217,312,58,33]
 
-        num_col = {'hunds':[5,0,18,33], 'tens':[22,0,18,33], 'ones':[40,0,18,33]}
+        num_col = {'hunds':[5,0,26,33], 'tens':[20,0,25,33], 'ones':[40,0,18,33]}
         final_num = ''
         for k in num_col:
             max_res = 0.5
@@ -88,10 +89,10 @@ class Detection:
                 crop_img = crop_img_og[num_col[k][1]:num_col[k][1]+num_col[k][3], num_col[k][0]:num_col[k][0]+num_col[k][2]]
                 for i in range(10):
                     # NEED TO FIX TENS SINCE THE DIGIT MOVES DIFFERENTLY WHEN ONES DIGIT IS A DIFFERENT NUMBER EACH TIME... (NEED A SOLUTION!) 
-                    cv2.imshow('sec', crop_img)
-                    cv2.waitKey()
+                    # cv2.imshow('sec', crop_img)
+                    # cv2.waitKey()
                     max_res, max_res2, digits = self.res_output(sec_crop=crop_img, n_col=k, number=i, nums=nums_true, area=region, max_r=max_res, max_r2=max_res2)
-                    print(digits)
+                    # print(digits)
                 try:
                     final_num = final_num + str(digits[-1])
                 except:
@@ -99,10 +100,10 @@ class Detection:
             else:
                 crop_img = crop_img_og[num_col[k][1]:num_col[k][1]+num_col[k][3], num_col[k][0]:num_col[k][0]+num_col[k][2]]
                 for i in range(1,3):
-                    cv2.imshow('sec', crop_img)
-                    cv2.waitKey()
+                    # cv2.imshow('sec', crop_img)
+                    # cv2.waitKey()
                     max_res, max_res2, digits = self.res_output(sec_crop=crop_img, n_col=k, number=i, nums=nums_true, area=region, max_r=max_res, max_r2=max_res2)
-                    print(digits)
+                    # print(digits)
                 try:
                     final_num = final_num + str(digits[-1])
                 except:
@@ -163,7 +164,7 @@ class Detection:
         img = self.screenshot()
         cv2.imwrite('test.jpg', img)
         # cv2.imwrite('turret_display.jpg', img)
-        input_data = {'enemy_damage':[217,312,58,33]} #62,36
+        input_data = {'enemy_damage':[217,312,58,33], 'player_damage':[67,312,58,33]} #62,36
         #, 'player_damage':[67,312,58,33]
         output_data = {}
         
