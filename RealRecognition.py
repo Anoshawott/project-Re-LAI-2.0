@@ -9,6 +9,9 @@ import math
 import os
 import pickle
 
+# need to get number of lives to get an indication of how many lives left so that the model knows when dead...
+#THEN ... create new env.reset class to do another game once died...
+
 # Maybe consider gpu accelerated python compiling...
 # from numba import jit, cuda
 
