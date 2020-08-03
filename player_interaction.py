@@ -12,10 +12,10 @@ class PlayerAI:
 
         # Action 8 and above are attacks
         self.win_prop = WindowCapture('Super Smash Flash 2 Beta').get_screen_position()
-        self.choices = {1:[[W], 1, True], 2:[[A], 1, True], 3:[[D], 1, True], 
-                        4:[[W], 2, False], 5:[[A], 2, True], 6:[[D], 2, True], 7:[[O], 1, False],
-                        8:[[P], 1, False], 9:[[A, O], [1, 4], [True, False]], 10:[[D, O], [1, 4], [True, False]],
-                        11:[[A, O], [1, 12], [True, False]], 12:[[D, O], [1, 12], [True, False]]} 
+        self.choices = {0:[[W], 1, True], 1:[[A], 1, True], 2:[[D], 1, True], 
+                        3:[[W], 2, False], 4:[[A], 2, True], 5:[[D], 2, True], 6:[[O], 1, False],
+                        7:[[P], 1, False], 8:[[A, O], [1, 4], [True, False]], 9:[[D, O], [1, 4], [True, False]],
+                        10:[[A, O], [1, 12], [True, False]], 11:[[D, O], [1, 12], [True, False]]} 
                         # pickle.load(open('choices.pickle', 'rb'))
                         
                         #, 3:[[S], 1, True],
@@ -29,7 +29,7 @@ class PlayerAI:
         return Detection().get_data()
 
     def action(self, choice):
-        if choice < 8:
+        if choice < 6:
             self.move(direction=self.choices[choice][0][0],
                      keypress_num=self.choices[choice][1])
         else:

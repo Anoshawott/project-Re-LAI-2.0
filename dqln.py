@@ -56,25 +56,14 @@ class AIEnv:
     OBSERVATION_SPACE_VALUES = (361,640,3)
     # Reward and Penalty Values
     # also need a reward for mana and hp increases, but make this minimal compared to others 
-    rewards = {'enemy_damage': 1, 'player_damage':1, 'death':1000, 'kill':1000}
+    rewards = {'enemy_damage': 1, 'player_damage':1, 'death':300, 'kill':300}
 
     def reset(self):
         # further this function so that the whole game resets with a new game each time an episode has past
         # use the following code to close windows from within this function: subprocess.call("taskkill /f /im notepad.exe", shell=True)
         # have timed intervals between each step in the reset process... --> just need to automate setting up a new game
         # need to also determine how to save each model between episodes...
-        # EnvReset().game_reset()
-        PressKey(BACK)
-        time.sleep(0.1)
-        ReleaseKey(BACK)
-
-        for i in list(range(10))[::-1]:
-            print(i+1)
-            time.sleep(1)
-
-        PressKey(BACK)
-        time.sleep(0.1)
-        ReleaseKey(BACK)
+        EnvReset().game_reset()
         
         #Start!
         self.play_ai = PlayerAI()
@@ -98,47 +87,38 @@ class AIEnv:
         
         net_reward = 0
         ### Reward and Penalty Conditions
-        # try:
-        #     if int(new_observation['output_data']['d']) == 1: #int(new_observation['output_data']['hp']) == 0
-        #         done = True
-        #         # new = int(new_observation['output_data']['d'])    
-        #         # old = int(last_obs['output_data']['d'])
-        #         delta = 1
-        #         total_penalty = -self.rewards['d'] * delta
-        #         net_reward += total_penalty
-        #         print('DEAD!')
-        # except:
-        #     None
+        ## Will only fully implement below check once the model is confident enough to survive properly (after some number of episodes)
         try:
-            if last_obs['output_data']['player_damange'] == '' and int(new_observation['output_data']['player_damange']) == 0:
-                net_reward += -self.reward['death']
+            if new_observation['output_data']['player_lives'] == '' and new_observation['output_data']['enemy_lives'] == '':
                 done = True
-                print('DEAD!')
+                print('FIN!')
         except:
             None
 
         tmp_new = copy.deepcopy(new_observation)
         tmp_old = copy.deepcopy(last_obs)
+        print('tmp_new', tmp_new['output_data'])
+        print('tmp_old', tmp_old['output_data'])
 
-        # Have a list that appends turrets that have been destroyed to have them removed and then added to the distance left to turret
-        # use min-max method to optimising distance reward reward since the ai rn is prioritising reaching the nexus before destroying
-        # anything else first...
         output_data_comp = new_observation['output_data'].items() & last_obs['output_data'].items()
 
-        if len(output_data_comp) != 2:
+        print(output_data_comp)
+
+        if len(output_data_comp) != 4:
             for i in output_data_comp:
                 del tmp_new['output_data'][i[0]]
                 del tmp_old['output_data'][i[0]]
             for k in tmp_new['output_data']:
-                if k == 'enemy_damage':
+                if k == 'enemy_damage' or k == 'enemy_lives':
                     try:
                         new = int(new_observation['output_data'][k])
                         old = int(last_obs['output_data'][k])
                         delta = new - old
                         print(k)
-                        if int(last_obs['output_data'][k]) > 0 and int(new_observation['output_data'][k]) == 0:
-                                net_reward += self.reward['kill']
-                                print('SMASHED!')
+                        if k == 'enemy_lives' and delta < 0:
+                            net_reward += self.rewards['kill']
+                            done=True
+                            print('SMASHED!')
                         if delta > 0:
                             total_reward = self.rewards[k] * delta
                             net_reward += total_reward
@@ -152,19 +132,30 @@ class AIEnv:
                         #     print('DEAD!')
                     except:
                         None
-                    
-                else:
+                elif k == 'player_lives':
                     try:
                         new = int(new_observation['output_data'][k])    
                         old = int(last_obs['output_data'][k])
                         delta = new - old
+                        if delta < 0:
+                            total_penalty = self.rewards['death'] * delta
+                            net_reward += total_penalty
+                            done=True
+                            print('DEAD!')
+                    except:
+                        print('not working...')
+                else:
+                    try:
+                        print('asdf;lkjasdflasdf')
+                        print(k)
+                        new = int(new_observation['output_data'][k])    
+                        old = int(last_obs['output_data'][k])
+                        print(new)
+                        print(old)
+                        delta = new - old
                         total_penalty = -self.rewards[k] * delta
                         net_reward += total_penalty
                         print('3')
-                        if int(last_obs['output_data'][k]) > 0 and int(new_observation['output_data'][k]) == 0:
-                            net_reward += -self.reward['death']
-                            done = True
-                            print('DEAD!')
                     except:
                         None                     
 
@@ -334,22 +325,16 @@ for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode', initial=FR
             action = np.random.randint(0,env.ACTION_SPACE_SIZE)
         print(step)
         print(action)
-        try:
-            new_state, reward, done, num = env.step(action=action, last_obs=current_state, count=num)
-            episode_reward += reward
-            print('episode_reward:', episode_reward)
-            print('-------------------')
-            agent.update_replay_memory((current_state, action, reward, new_state, done))
-            agent.train(done, step)
 
-            current_state = copy.deepcopy(new_state)
-            step += 1
-        except:
-            # time.sleep(40)
-            # done = True
-            # subprocess.call("taskkill /f /im \"LeagueClient.exe\"", shell=True)
-            # time.sleep(5)
-            None
+        new_state, reward, done, num = env.step(action=action, last_obs=current_state, count=num)
+        episode_reward += reward
+        print('episode_reward:', episode_reward)
+        print('-------------------')
+        agent.update_replay_memory((current_state, action, reward, new_state, done))
+        agent.train(done, step)
+
+        current_state = copy.deepcopy(new_state)
+        step += 1
         
     
     # NEED TO ADD FUNCTION TO SAVE EVERY EPISODE!!! --> every 5 episodes?

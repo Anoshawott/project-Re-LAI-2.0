@@ -1,0 +1,82 @@
+ld not be found.
+4
+3
+2
+1
+  0%|                                                                                   | 0/20000 [00:00<?, ?episode/s]4
+3
+2
+1
+Reset done!
+1
+8
+episode_reward: 0
+-------------------
+2
+11
+enemy_damage
+5
+0
+2
+episode_reward: 5
+-------------------
+3
+0
+3
+7
+episode_reward: 5
+-------------------
+4
+6
+alsdkjfa;lskdjfa;skdjfl
+player_damage
+alsdkjfa;lskdjfa;skdjfl
+player_lives
+2
+3
+episode_reward: 5
+-------------------
+5
+4
+alsdkjfa;lskdjfa;skdjfl
+player_damage
+episode_reward: 5
+-------------------
+6
+2
+episode_reward: 5
+-------------------
+7
+10
+episode_reward: 5
+-------------------
+8
+2
+episode_reward: 5
+-------------------
+9
+7
+episode_reward: 5
+-------------------
+10
+7
+alsdkjfa;lskdjfa;skdjfl
+player_damage
+alsdkjfa;lskdjfa;skdjfl
+player_lives
+1
+2
+episode_reward: 5
+-------------------
+11
+6
+alsdkjfa;lskdjfa;skdjfl
+player_damage
+episode_reward: 5
+-------------------
+12
+9
+episode_reward: 5
+-------------------
+13
+6

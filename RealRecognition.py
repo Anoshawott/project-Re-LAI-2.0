@@ -67,9 +67,7 @@ class Detection:
         except:
             return None
 
-
     def digit_detect(self, img=None, region=None, x=0, y=0, width=640, height=361):
-        tmp_numbers = {}
         # Read and crop the input image 
         crop_img_og = img[y:y+height, x:x+width]
         # cv2.imshow('crop', crop_img_og)
@@ -114,11 +112,64 @@ class Detection:
 
         return final_num
 
+    def simple_res_output(self, sec_crop=None, number=None, nums=None, area=None, max_r=None, max_r2=None):
+        template = cv2.imread('images/numbers/'+ area +'/'+ str(number) + '.jpg', 0)
+        res = self.match_res(sec_crop, template)
+        # print(res)
+        # cv2.imshow('temp', template)
+        # cv2.waitKey()
 
+        # print(i)
+
+        if area!='enemy_lives':
+            if np.max(res) > max_r:
+                max_r = np.max(res)
+                nums.append(number)
+            else:
+                return max_r, max_r2, nums
+        else:
+            if np.max(res) > max_r2:
+                max_r2 = np.max(res)
+                # print(max_r2)
+                nums.append(number)
+            else:
+                return max_r, max_r2, nums
+        # count = 0
+                # for pt in zip(*loc[::-1]):
+                #     count+=1
+
+                # if count > 0 and region=='enemy_damage':
+                #     nums.append(img)
+                # elif count > 0:
+                #     nums.append(img)
+        try:
+            return max_r, max_r2, nums
+        except:
+            return None
+
+    def simple_detect(self, img=None, region=None, x=0, y=0, width=640, height=361):
+        crop_img_og = img[y:y+height, x:x+width]
+        max_res = 0.5
+        max_res2 = 0.5
+        nums_true = []
+        final_num=''
+        for i in range(0,4):
+            max_res, max_res2, digits = self.simple_res_output(sec_crop=crop_img_og, number=i, nums=nums_true, 
+                                                               area=region, max_r=max_res, max_r2=max_res2)
+        try:
+            final_num = digits[-1]
+        except:
+            None
+        return final_num
+
+
+    # Enemy lives: 238x298 16x14; Player lives: 88x298 16x14
+    # Maybe add later end winner determination, where on win screen identify winner from rank of 1 or 2 on cards
+    # last priority though cause will train from just the loss or win of one life...
     def img_save(self, number=None):
         img = self.screenshot()
         # cv2.imwrite('turret_display.jpg', img)
-        input_data = {'enemy_damage':[217,312,58,33]}
+        input_data = {'enemy_damage':[88,298,16,14]}
         
         for area in input_data:
             # print(area,'----------')
@@ -135,39 +186,12 @@ class Detection:
         print(copy,': Saved!')
         return
 
-    # returns turret state and distance from player from mini-map
-    # def turret_detect(self, img, copy=None, region=None, x=0, y=0, width=1270, height=711):
-    #     tmp_numbers = {}
-    #     # Read and crop the input image 
-    #     crop_img = img[y:y+height, x:x+width]
-
-    #     # Convert to grayscale and apply Gaussian filtering; was COLOR_BGR2GRAY
-    #     im_gray = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
-    #     template = cv2.imread('images/players/player_control.jpg', 0)
-
-    #     w, h = template.shape[::-1]
-    #     res = cv2.matchTemplate(im_gray, template, cv2.TM_CCOEFF_NORMED)
-        
-    #     threshold = 0.45
-        
-    #     loc = np.where(res >= threshold)
-    #     x_pos = None
-    #     y_pos = None
-
-    #     for pt in zip(*loc[::-1]):
-    #         # cv2.rectangle(crop_img, pt, (pt[0]+w, pt[1]+h), (0,255,255), 2)
-    #         x_pos = pt[0]/2
-    #         y_pos = pt[1]/2
-    #     return x_pos, y_pos, crop_img
-
-    ## FINISH FIXING DATA CHECK DICTIONARY TO IMPROVE EFFICIENCY BY AVOIDING A FOR LOOP THROUGH ALL IMAGES...
-    # ONCE DATA CHECK DONE CAN START DQLN IMPLEMENTATION...
-    # put output_data variable for last_digits when initiating function; turret':[146,20,30,15],
     def get_data(self, last_digits = None, last_pos = None, time = 0):
         img = self.screenshot()
         cv2.imwrite('test.jpg', img)
         # cv2.imwrite('turret_display.jpg', img)
-        input_data = {'enemy_damage':[217,312,58,33], 'player_damage':[67,312,58,33]} #62,36
+        input_data = {'enemy_damage':[217,312,58,33], 'player_damage':[67,312,58,33],
+                      'enemy_lives':[238,298,16,14], 'player_lives':[88,298,16,14]} #62,36
         #, 'player_damage':[67,312,58,33]
         output_data = {}
         
@@ -177,11 +201,14 @@ class Detection:
             y_coor = input_data[area][1]
             w = input_data[area][2]
             h = input_data[area][3]
-            numbers = {} 
-
-            returned_number = self.digit_detect(img = img, region = area,
-                                        x = x_coor, y = y_coor, width = w, height = h)
-            output_data[area]=returned_number  
+            if area == 'enemy_damage' or area == 'player_damage':
+                returned_number = self.digit_detect(img = img, region = area,
+                                            x = x_coor, y = y_coor, width = w, height = h)
+                output_data[area]=returned_number
+            else:
+                returned_number = self.simple_detect(img = img, region = area,
+                                            x = x_coor, y = y_coor, width = w, height = h)
+                output_data[area]=returned_number
 
         return {'output_data':output_data, 'img': img}
 
